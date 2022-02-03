@@ -81,6 +81,7 @@ mpz_class fastpow0(mpz_class a, mpz_class b){
 	return tmp;
 }
 
+// NOT IMPLEMENTED YET
 // same as fastpow, but checks if the exponent has a low amount of divisors, this can optimize even further if it's not too time expensive
 mpz_class fastpow2(mpz_class a, mpz_class b){
 	std::vector<mpz_class> factors = getFactors(b);
