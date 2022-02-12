@@ -1,27 +1,41 @@
 #include <vector>
 #include <gmpxx.h>
 #include <iostream>
+
+
+
+// bad unoptimized, but should give an estimate 
 mpz_class sqrt(mpz_class a){
-	mpz_class sqrt = 0;
-	mpz_class tmp = 1;
-	while (a > 0){
-		a -= tmp;
-		tmp += 2;
-		sqrt++;
+
+
+	mpz_class tmp = a;
+	while (tmp * tmp > a){
+		tmp <<= 1;
 	}
-	return sqrt;
+	tmp >>= 1;
+	
+	return tmp;
 }
 
 
 
 // yes, this uses vectors until i have a better way to manage memory
-
+// algorithm changed to H
 std::vector <mpz_class> getFactors(mpz_class input){
-	mpz_class maxIterator = sqrt(input);
+	//mpz_class maxIterator = input;
 	std::vector <mpz_class> tmp;
 
+	retryFactor2:
+		if (input % 2 == 0){
+			// remember, ONE bitshift is a factor of TWO
+			input >>= 1;
+			tmp.push_back(2);
+			goto retryFactor2;
+
+		}
+
 	// start at 2, starting at 1 might result in an endless loop
-	for (mpz_class i = 2; i < maxIterator; i++){
+	for (mpz_class i = 3; i <= input; i+= 2){
 		// eww, goto statements
 		// first time i ever use them
 		retry:
@@ -29,7 +43,6 @@ std::vector <mpz_class> getFactors(mpz_class input){
 			tmp.push_back(i);
 			input /= i;
 
-			// this 'optimization' will break things, it might be made to work in the future but i think it works well enough
 			//maxIterator /= i;
 			goto retry;
 		}
