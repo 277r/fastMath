@@ -100,7 +100,6 @@ mpz_class fastpow(mpz_class &a, mpz_class &b){
 
 
 
-// NOT IMPLEMENTED YET
 // same as fastpow, but removes the largest power of 2
 mpz_class fastpow2(mpz_class a, mpz_class b){
 	// contains all 2^x values in exponent
@@ -118,6 +117,8 @@ mpz_class fastpow2(mpz_class a, mpz_class b){
 		b -= fastpow(constant2,factorPart);
 	}
 	
+
+	// calculate all a^(2^n) where n is a number in factors 
 	std::vector<mpz_class> temporary_values;
 	for (int i = 0; i < factors.size(); i++){
 		temporary_values.push_back(a);
@@ -127,13 +128,11 @@ mpz_class fastpow2(mpz_class a, mpz_class b){
 	}
 	
 
-	// combine all together
+	// combine all previously calculated numbers together
+	// could be memory optimized by removing temporary_values[1] after using it and iterating over it
 	for (int i = 1; i < temporary_values.size(); i++){
 		temporary_values[0] *= temporary_values[i];
 	}
-
-
-	
 
 	return temporary_values[0];
 }
