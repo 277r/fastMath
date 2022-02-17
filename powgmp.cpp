@@ -1,7 +1,8 @@
 #include <vector>
 #include <gmpxx.h>
 #include <iostream>
-
+#include <thread>
+#include <future>
 
 
 // bad unoptimized, but should give an estimate 
@@ -33,26 +34,21 @@ std::vector <mpz_class> getFactors(mpz_class input){
 	//mpz_class maxIterator = input;
 	std::vector <mpz_class> tmp;
 
-	retryFactor2:
-		if (input % 2 == 0){
+		while (input % 2 == 0){
 			// remember, ONE bitshift is a factor of TWO
 			input >>= 1;
 			tmp.push_back(2);
-			goto retryFactor2;
+		
 
 		}
 
 	// start at 2, starting at 1 might result in an endless loop
 	for (mpz_class i = 3; i <= input; i+= 2){
-		// eww, goto statements
-		// first time i ever use them
-		retry:
-		if (input % i == 0){
+		while (input % i == 0){
 			tmp.push_back(i);
 			input /= i;
 
 			//maxIterator /= i;
-			goto retry;
 		}
 
 
@@ -100,10 +96,25 @@ mpz_class fastpow(mpz_class &a, mpz_class &b){
 
 
 
+
+
+void sqrloop(mpz_class *tmpval, mpz_class *fact){
+	for (int ii = 0; ii < (*fact); ii++){
+		(*tmpval) *= (*tmpval);
+	}
+	return;
+}
+
+
+
 // same as fastpow, but removes the largest power of 2
-mpz_class fastpow2(mpz_class a, mpz_class b){
+mpz_class fastpow2(mpz_class a, mpz_class b, bool multiThreaded){
+	
+	// making these 2 heap might work
+	std::vector<mpz_class> *temporary_values = new std::vector<mpz_class>;
 	// contains all 2^x values in exponent
-	std::vector<mpz_class> factors;
+	std::vector<mpz_class> *factors = new std::vector<mpz_class>;
+
 	mpz_class constant2 = 2;
 
 
@@ -111,30 +122,51 @@ mpz_class fastpow2(mpz_class a, mpz_class b){
 	while (b > 0){
 	
 		mpz_class factorPart = mp_log2(b);	
-		factors.push_back(factorPart);
+		factors->push_back(factorPart);
 	
 		// need to use normal fastpow bc endless loops
 		b -= fastpow(constant2,factorPart);
 	}
 	
+	
 
 	// calculate all a^(2^n) where n is a number in factors 
-	std::vector<mpz_class> temporary_values;
-	for (int i = 0; i < factors.size(); i++){
-		temporary_values.push_back(a);
-		for (int ii = 0; ii < factors[i]; ii++){
-			temporary_values[i] *= temporary_values[i];
+
+
+	if (multiThreaded){
+		std::vector<std::thread> threads;
+		for (int i = 0; i < factors->size(); i++){
+			temporary_values->push_back(a);
+			
+			
 		}
+		for (int i = 0; i < factors->size(); i++){
+			threads.push_back(std::thread(sqrloop, &((*temporary_values)[i]),&((*factors)[i])));
+		}
+
+		for (int i = 0; i < threads.size(); i++){
+			threads[i].join();
+		}
+
 	}
-	
+
+	else {
+		for (int i = 0; i < factors->size(); i++){
+			temporary_values->push_back(a);
+			for (int ii = 0; ii < (*factors)[i]; ii++){
+				(*temporary_values)[i] *= (*temporary_values)[i];
+			}
+		}
+
+	}
 
 	// combine all previously calculated numbers together
 	// could be memory optimized by removing temporary_values[1] after using it and iterating over it
-	for (int i = 1; i < temporary_values.size(); i++){
-		temporary_values[0] *= temporary_values[i];
+	for (int i = 1; i < temporary_values->size(); i++){
+		(*temporary_values)[0] *= (*temporary_values)[i];
 	}
 
-	return temporary_values[0];
+	return (*temporary_values)[0];
 }
 
 
